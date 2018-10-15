@@ -8,7 +8,7 @@ const int num_per_thr = 1000000;
 WFMPMC<int, 4> q;
 int64_t write_sum = 0;
 int64_t read_sum = 0;
-bool lounger = false;
+int lounger = 0;
 
 void writer() {
     random_device rd;
@@ -20,10 +20,14 @@ void writer() {
     while(cnt--) {
         int newval = dis(generator);
         sum += newval;
-        if(lounger) {
+        if(lounger == 1) {
             q.emplace(newval);
         }
-        else {
+        else if(lounger == 2) {
+            while(!q.tryEmplace(newval))
+                ;
+        }
+        else { // lounger == 0
             auto idx = q.getWriteIdx();
             int* data;
             while((data = q.getWritable(idx)) == nullptr)
@@ -39,8 +43,14 @@ void reader() {
     int64_t sum = 0;
     int cnt = num_per_thr;
     while(cnt--) {
-        if(lounger) {
+        if(lounger == 1) {
             sum += q.pop();
+        }
+        else if(lounger == 2) {
+            int data;
+            while(!q.tryPop(data))
+                ;
+            sum += data;
         }
         else {
             int64_t idx = q.getReadIdx();
@@ -55,7 +65,7 @@ void reader() {
 }
 
 int main(int argc, char** argv) {
-    if(argc > 1 && *argv[1] == '1') lounger = true;
+    if(argc > 1) lounger = stoi(argv[1]);
 
     cout << "lounger: " << lounger << endl;
 

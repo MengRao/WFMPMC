@@ -8,7 +8,7 @@ using namespace std;
 const int max_num = 100000000;
 
 WFMPMC<int, 8> q;
-bool lounger = false;
+int lounger = 0;
 
 void bench() {
     int write_num = 0;
@@ -16,10 +16,14 @@ void bench() {
 
     while(read_num < max_num) {
         for(int i = 0; i < 8; i++) {
-            if(lounger) {
+            if(lounger == 1) {
                 q.emplace(write_num);
             }
-            else {
+            else if(lounger == 2) {
+                while(!q.tryEmplace(write_num))
+                    ;
+            }
+            else { // lounger == 0
                 auto idx = q.getWriteIdx();
                 int* data;
                 while((data = q.getWritable(idx)) == nullptr)
@@ -31,8 +35,12 @@ void bench() {
         }
         for(int i = 0; i < 8; i++) {
             int cur;
-            if(lounger) {
+            if(lounger == 1) {
                 cur = q.pop();
+            }
+            else if(lounger == 2) {
+                while(!q.tryPop(cur))
+                    ;
             }
             else {
                 int64_t idx = q.getReadIdx();
@@ -52,7 +60,7 @@ void bench() {
 }
 
 int main(int argc, char** argv) {
-    if(argc > 1 && *argv[1] == '1') lounger = true;
+    if(argc > 1) lounger = stoi(argv[1]);
     if(!cpupin(1)) return 1;
 
     cout << "lounger: " << lounger << endl;
