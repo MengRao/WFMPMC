@@ -8,6 +8,7 @@ Both writer and reader need to call 3 member functions in sequence to complete o
   * getWriteIdx() to allocate an  index to write at. 
   * getWritable(idx) to get a writable pointer and user should assgin the object refered to by the pointer. If the object at the index is not ready for writing it'll return nullptr, and user should retry.
   * commitWrite(idx) to commit the operation after writing is done.
+  
 Of course, all the 3 operations are wait-free.
 ```c++
 WFMPMC<int, 8> q;
