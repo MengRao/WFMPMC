@@ -26,8 +26,7 @@ T* shmmap(const char * filename) {
         std::cerr << "mmap failed: " << strerror(errno) << std::endl;
         return nullptr;
     }
-    // T's constuctor must be thread safe
-    new(ret) T;
+    ret->shmInit();
     return ret;
 }
 

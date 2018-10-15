@@ -3,7 +3,7 @@
 using namespace std;
 
 const int nthr = 6;
-const int num_per_thr = 10000;
+const int num_per_thr = 1000000;
 
 WFMPMC<int, 4> q;
 int64_t write_sum = 0;
@@ -26,7 +26,8 @@ void writer() {
         else {
             auto idx = q.getWriteIdx();
             int* data;
-            while((data = q.allocWrite(idx)) == nullptr) this_thread::yield();
+            while((data = q.getWritable(idx)) == nullptr)
+                ;
             *data = newval;
             q.commitWrite(idx);
         }
@@ -44,7 +45,8 @@ void reader() {
         else {
             int64_t idx = q.getReadIdx();
             int* data;
-            while((data = q.allocRead(idx)) == nullptr) this_thread::yield();
+            while((data = q.getReadable(idx)) == nullptr)
+                ;
             sum += *data;
             q.commitRead(idx);
         }

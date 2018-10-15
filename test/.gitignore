@@ -1,3 +1,4 @@
+bench
 multhread_test
 shm_reader
 shm_writer
