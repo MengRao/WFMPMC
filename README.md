@@ -1,5 +1,6 @@
 # WFMPMC
-WFMPMC is a real **wait-free** and **zero-copy** multiple producer multiple consumer queue template writeen in C++11.
+WFMPMC is a real **wait-free** and **zero-copy** multiple producer multiple consumer queue template written in C++11.
+
 It's also suitable for residing in shared memory in Linux for IPC
 
 ## Usage
