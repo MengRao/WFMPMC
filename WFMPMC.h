@@ -56,8 +56,7 @@ public:
     }
 
     int64_t getWriteIdx() {
-        // later operation is dependent on the returned idx, so memory_order_consume is the best
-        return write_idx.fetch_add(1, std::memory_order_consume);
+        return write_idx.fetch_add(1, std::memory_order_relaxed);
     }
 
     T* getWritable(int64_t idx) {
@@ -100,8 +99,7 @@ public:
     }
 
     int64_t getReadIdx() {
-        // later operation is dependent on the returned idx, so memory_order_consume is the best
-        return read_idx.fetch_add(1, std::memory_order_consume);
+        return read_idx.fetch_add(1, std::memory_order_relaxed);
     }
 
     T* getReadable(int64_t idx) {
