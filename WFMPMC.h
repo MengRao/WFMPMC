@@ -3,10 +3,11 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
+// WFMPMC_tid can be shared with different WFMPMC objects of different kinds
 thread_local uint32_t WFMPMC_tid;
 
-// THR_SIZE must not be less than the max number of writer/reader threads, otherwise tryXXX() would fail forever
-// It's preferred to set THR_SIZE twice the max number, as tids is used like an open addressing hash table
+// THR_SIZE must not be less than the max number of threads using tryEmplace/tryPop, otherwise they could fail forever
+// It's preferred to set THR_SIZE twice the max number, because THR_SIZE is the size of an open addressing hash table
 // 16 is a good default value for THR_SIZE, as 16 tids fit exactly in a cache line: 16 * 4 = 64
 template<class T, uint32_t SIZE, uint32_t THR_SIZE = 16>
 class WFMPMC
@@ -81,6 +82,7 @@ public:
         commitWrite(idx);
     }
 
+    // not zero-copy, but wait-free(or wait-forever if THR_SIZE is not large enough)
     template<typename... Args>
     bool tryEmplace(Args&&... args) {
         ThrIdx* thridx = getThrIdx();
@@ -125,6 +127,7 @@ public:
         return ret;
     }
 
+    // not zero-copy, but wait-free(or wait-forever if THR_SIZE is not large enough)
     bool tryPop(T& v) {
         ThrIdx* thridx = getThrIdx();
         if(!thridx) return false;

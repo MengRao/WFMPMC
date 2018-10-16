@@ -5,7 +5,7 @@ using namespace std;
 const int nthr = 6;
 const int num_per_thr = 1000000;
 
-WFMPMC<int, 4> q;
+WFMPMC<int, 4, 16> q;
 int64_t write_sum = 0;
 int64_t read_sum = 0;
 int lounger = 0;

@@ -5,7 +5,7 @@
 #include "cpupin.h"
 using namespace std;
 
-bool lounger = false;
+int lounger = 0;
 volatile bool running = true;
 Q* q;
 
@@ -21,10 +21,14 @@ void writer() {
             this_thread::yield();
             continue;
         }
-        if(lounger) {
+        if(lounger == 1) {
             q->emplace(Entry{now(), tid, num});
         }
-        else {
+        else if(lounger == 2) {
+            while(!q->tryEmplace(Entry{now(), tid, num}))
+                ;
+        }
+        else { // lounger == 0
             auto idx = q->getWriteIdx();
             Entry* data;
             while((data = q->getWritable(idx)) == nullptr)
@@ -41,7 +45,7 @@ void writer() {
 }
 
 int main(int argc, char** argv) {
-    if(argc > 1 && *argv[1] == '1') lounger = true;
+    if(argc > 1) lounger = stoi(argv[1]);
     if(argc > 2) {
         int cpuid = stoi(argv[2]);
         if(!cpupin(cpuid)) return 1;
