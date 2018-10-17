@@ -5,9 +5,9 @@ It's also suitable for residing in shared memory in Linux for IPC
 
 ## Usage
 Both writer and reader need to call 3 member functions in sequence to complete one operation. Take writer for example: 
-  * getWriteIdx() to allocate an  index to write at. 
-  * getWritable(idx) to get a writable pointer and user should assgin the object referred to by the pointer. If the object at the index is not ready for writing it'll return nullptr, and user should retry.
-  * commitWrite(idx) to commit the operation after writing is done.
+- `getWriteIdx()` to allocate an  index to write at. 
+- `getWritable(idx)` to get a writable pointer and user should assgin the object referred to by the pointer. If the object at the index is not ready for writing it'll return nullptr, and user should retry.
+- `commitWrite(idx)` to commit the operation after writing is done.
   
 Of course, all the 3 operations are wait-free.
 ```c++
@@ -72,3 +72,6 @@ SHM IPC latency for transfering an 16 byte object is around **200 cycles** when 
 WFMPMC requires that the index acquired from getXXXIdx() must be committed by commitXXX(idx) later(Try API is similar that it must succeed eventually), otherwise the queue will be corrupted. If unfortunately, an program who has got an idx and is busy-waiting on it needs to shut down, it can't do it right away but still waiting to commit, and this could last infinitely. 
 
 One way to avoid this issue is to check if the operation is likely to wait before calling getXXXIdx(), that is, check **empty()** for reading and **full()** for writing. See [shm_writer.cc](https://github.com/MengRao/WFMPMC/blob/master/test/shm_writer.cc)/[shm_reader.cc](https://github.com/MengRao/WFMPMC/blob/master/test/shm_reader.cc) for details.
+
+## Reference
+- *Erik Rigtorp*. [MPMCQueue](https://github.com/rigtorp/MPMCQueue).
