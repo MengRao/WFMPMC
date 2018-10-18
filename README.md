@@ -5,9 +5,9 @@ It's also suitable for residing in shared memory in Linux for IPC
 
 ## Usage
 Both writer and reader need to call 3 member functions in sequence to complete one operation. Take writer for example: 
-- `getWriteIdx()` to allocate an  index to write at. 
-- `getWritable(idx)` to get a writable pointer and user should construct the object referred to by the pointer. If the object at the index is not ready for writing(when the queue is `full()`) it'll return nullptr, and user can retry.
-- `commitWrite(idx)` to commit the operation after writing is done.
+1. `getWriteIdx()` to allocate an  index to write at. 
+2. `getWritable(idx)` to get a writable pointer and user should construct the object referred to by the pointer. If the object at the index is not ready for writing(when the queue is `full()`) it'll return nullptr, and user can retry.
+3. `commitWrite(idx)` to commit the operation after writing is done.
   
 Of course, all the 3 operations are wait-free.
 ```c++
