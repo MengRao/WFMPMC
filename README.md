@@ -6,7 +6,7 @@ It's also suitable for residing in shared memory in Linux for IPC
 ## Usage
 Both writer and reader need to call 3 member functions in sequence to complete one operation. Take writer for example: 
 - `getWriteIdx()` to allocate an  index to write at. 
-- `getWritable(idx)` to get a writable pointer and user should assgin the object referred to by the pointer. If the object at the index is not ready for writing(when the queue is `full()`) it'll return nullptr, and user can retry.
+- `getWritable(idx)` to get a writable pointer and user should construct the object referred to by the pointer. If the object at the index is not ready for writing(when the queue is `full()`) it'll return nullptr, and user can retry.
 - `commitWrite(idx)` to commit the operation after writing is done.
   
 Of course, all the 3 operations are wait-free.
@@ -31,6 +31,8 @@ while((data = q.getReadable(idx)) == nullptr)
 std::cout<< *data << std::endl;
 q.commitRead(idx);
 ```
+Note that the user defined type `T` doesn't require default constructor, but the pointer returned by `getWritable(idx)`(if successful) points to an **unconstructed** object, surprise? Thus user should construct it himself if necessary. See [tor_test.cc](https://github.com/MengRao/WFMPMC/blob/master/test/tor_test.cc).
+
 If you find the API too tedious to use and don't care about the wait-free and zero-copy features, there're **Lounger** versions for **you**: `emplace()` and `pop()`.
 ```c++
 WFMPMC<int, 8> q;
