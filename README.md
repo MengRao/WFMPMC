@@ -73,7 +73,7 @@ SHM IPC latency for transfering an 16 byte object is around **200 cycles** when 
 ## A Pitfall for Shared Memory Usage
 WFMPMC requires that the index acquired from getXXXIdx() must be committed by commitXXX(idx) later(Try API is similar that it must succeed eventually), otherwise the queue will be corrupted. If unfortunately, an program who has got an idx and is busy-waiting on it needs to shut down, it can't do it right away but still waiting to commit, and this could last infinitely. 
 
-Even worse, if a writer holding an index crashes before committing, then the corresponding reader will never succeed in reading one element even if other writer has completed an write operation. This is the reason why WFMPMC is not strict wait-free.
+Even worse, if a writer holding an index crashes before committing, then the corresponding reader will never succeed in reading one element even if other writer has completed a write operation. This is the reason why WFMPMC is not strict wait-free.
 
 One way to mitigate this risk is to check if the operation is likely to wait before calling getXXXIdx(), that is, check `empty()` for reading and `full()` for writing. See [shm_writer.cc](https://github.com/MengRao/WFMPMC/blob/master/test/shm_writer.cc)/[shm_reader.cc](https://github.com/MengRao/WFMPMC/blob/master/test/shm_reader.cc) for details.
 
