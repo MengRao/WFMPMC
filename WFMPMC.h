@@ -41,6 +41,14 @@ public:
         init_state.store(2, std::memory_order_release);
     }
 
+    ~WFMPMC() {
+        for(uint32_t i = 0; i < SIZE; i++) {
+            if(blks[i].stat.load(std::memory_order_relaxed) < 0) {
+                reinterpret_cast<T&>(blks[i].data).~T();
+            }
+        }
+    }
+
     int64_t size() {
         return write_idx.load(std::memory_order_relaxed) - read_idx.load(std::memory_order_relaxed);
     }
@@ -59,10 +67,11 @@ public:
         return write_idx.fetch_add(1, std::memory_order_relaxed);
     }
 
+    // if successful, the returned pointer points to an *unconstructed* object that user should construct himself
     T* getWritable(int64_t idx) {
         auto& blk = blks[idx % SIZE];
         if(blk.stat.load(std::memory_order_acquire) != idx) return nullptr;
-        return &blk.data;
+        return reinterpret_cast<T*>(&blk.data);
     }
 
     void commitWrite(int64_t idx) {
@@ -105,11 +114,12 @@ public:
     T* getReadable(int64_t idx) {
         auto& blk = blks[idx % SIZE];
         if(blk.stat.load(std::memory_order_acquire) != ~idx) return nullptr;
-        return &blk.data;
+        return reinterpret_cast<T*>(&blk.data);
     }
 
     void commitRead(int64_t idx) {
         auto& blk = blks[idx % SIZE];
+        reinterpret_cast<T&>(blk.data).~T();
         blk.stat.store(idx + SIZE, std::memory_order_release);
     }
 
@@ -120,7 +130,6 @@ public:
         while((data = getReadable(idx)) == nullptr)
             ;
         T ret = std::move(*data);
-        data->~T();
         commitRead(idx);
         return ret;
     }
@@ -136,7 +145,6 @@ public:
         T* data = getReadable(idx);
         if(!data) return false;
         v = std::move(*data);
-        data->~T();
         commitRead(idx);
         idx = -1;
         return true;
@@ -170,7 +178,7 @@ private:
     struct
     {
         alignas(64) std::atomic<int64_t> stat;
-        T data;
+        typename std::aligned_storage<sizeof(T), alignof(T)>::type data;
     } blks[SIZE];
 
     alignas(64) std::atomic<uint32_t> tids[THR_SIZE];

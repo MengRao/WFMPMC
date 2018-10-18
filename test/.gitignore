@@ -1,4 +1,5 @@
 bench
+tor_test
 multhread_test
 shm_reader
 shm_writer
