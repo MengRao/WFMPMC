@@ -46,6 +46,7 @@ void torTest() {
         Foo* data;
         while((data = q.getWritable(idx)) == nullptr)
             ;
+        assertTor(0, 0);
         new(data) Foo(1);
         q.commitWrite(idx);
     }
@@ -65,6 +66,7 @@ void torTest() {
         Foo* data;
         while((data = q.getReadable(idx)) == nullptr)
             ;
+        assertTor(3, 0);
         assert(data->a == 1);
         q.commitRead(idx);
     }
