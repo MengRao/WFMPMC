@@ -62,6 +62,7 @@ while(!q.tryPop(data))
 std::cout << data << std::endl;
 ```
 The implementation of Try API is a little bit tricky that it uses **object scope thread local** variables to save the index when a try is failed, and reuse it in the next try. It uses an open addressing hash table for searching thread ids, and the size of the hash table can be set by the third template parameter `THR_SIZE`.
+Also user needs to compile and link with WFMPMC.cc if he uses `tryEmplace()` or `tryPop()`.
 
 ## Performance
 Benchmark is done on an Ubuntu 14.04 host with Intel(R) Xeon(R) CPU E5-2687W 0 @ 3.10GHz.
