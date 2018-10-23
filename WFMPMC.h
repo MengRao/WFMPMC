@@ -27,9 +27,6 @@ SOFTWARE.
 #include <unistd.h>
 #include <sys/syscall.h>
 
-// WFMPMC_tid can be shared with different WFMPMC objects of different kinds
-extern thread_local uint32_t WFMPMC_tid;
-
 // THR_SIZE must not be less than the max number of threads using tryEmplace/tryPop, otherwise they could fail forever
 // It's preferred to set THR_SIZE twice the max number, because THR_SIZE is the size of an open addressing hash table
 // 16 is a good default value for THR_SIZE, as 16 tids fit exactly in a cache line: 16 * 4 = 64
@@ -211,5 +208,11 @@ private:
         alignas(64) int64_t write_idx;
         int64_t read_idx;
     } thr_idxes[THR_SIZE];
+
+    static thread_local uint32_t WFMPMC_tid;
 };
+
+// It's OK to define template static variable in header
+template<class T, uint32_t SIZE, uint32_t THR_SIZE>
+thread_local uint32_t WFMPMC<T, SIZE, THR_SIZE>::WFMPMC_tid;
 
