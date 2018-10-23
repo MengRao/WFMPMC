@@ -28,7 +28,7 @@ SOFTWARE.
 #include <sys/syscall.h>
 
 // WFMPMC_tid can be shared with different WFMPMC objects of different kinds
-thread_local uint32_t WFMPMC_tid;
+extern thread_local uint32_t WFMPMC_tid;
 
 // THR_SIZE must not be less than the max number of threads using tryEmplace/tryPop, otherwise they could fail forever
 // It's preferred to set THR_SIZE twice the max number, because THR_SIZE is the size of an open addressing hash table
