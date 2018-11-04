@@ -74,7 +74,7 @@ while(!q.tryVisitPush([](int& data){ data = 123; }))
 ...
 
 // read an integer from queue
-while(!q.tryVisitPop([](int&& data){ std::cout << data << std::endl; ))
+while(!q.tryVisitPop([](int&& data){ std::cout << data << std::endl; }))
   ;
 ```
 
