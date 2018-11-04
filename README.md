@@ -45,12 +45,12 @@ q.emplace(123)
 // read an integer from queue
 std::cout << q.pop() << std::endl;
 ```
-There're also `tryEmplace()` and `tryPop()` which are not zero-copy but wait-free:
+There're also `tryPush()` and `tryPop()` which are not zero-copy but wait-free:
 ```c++
 WFMPMC<int, 8> q;
 
 // write integer 123 into queue
-while(!q.tryEmplace(123))
+while(!q.tryPush(123))
   ;
 
 ...
@@ -62,6 +62,21 @@ while(!q.tryPop(data))
 std::cout << data << std::endl;
 ```
 The implementation of Try API is a little bit tricky that it uses **object scope thread local** variables to save the index when a try is failed, and reuse it in the next try. It uses an open addressing hash table for searching thread ids, and the size of the hash table can be set by the third template parameter `THR_SIZE`.
+
+Lastly, zero-copy try API was added which uses Visitor model: `tryVisitPush(lambda)`/`tryVisitPop(lambda)`:
+```c++
+WFMPMC<int, 8> q;
+
+// write integer 123 into queue
+while(!q.tryVisitPush([](int& data){ data = 123; }))
+  ;
+
+...
+
+// read an integer from queue
+while(!q.tryVisitPop([](int&& data){ std::cout << data << std::endl; ))
+  ;
+```
 
 ## Performance
 Benchmark is done on an Ubuntu 14.04 host with Intel(R) Xeon(R) CPU E5-2687W 0 @ 3.10GHz.
