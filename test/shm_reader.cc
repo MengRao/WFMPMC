@@ -35,6 +35,13 @@ void reader() {
             auto ts = now();
             cout << "tid: " << cur.tid << " val: " << cur.val << " latency: " << (ts - cur.ts) << " cycles" << endl;
         }
+        else if(lounger == 3) {
+            while(!q->tryVisitPop([&](Entry&& cur) {
+                auto ts = now();
+                cout << "tid: " << cur.tid << " val: " << cur.val << " latency: " << (ts - cur.ts) << " cycles" << endl;
+            }))
+                ;
+        }
         else {
             int64_t idx = q->getReadIdx();
             Entry* data;

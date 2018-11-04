@@ -27,7 +27,7 @@ SOFTWARE.
 #include <unistd.h>
 #include <sys/syscall.h>
 
-// THR_SIZE must not be less than the max number of threads using tryEmplace/tryPop, otherwise they could fail forever
+// THR_SIZE must not be less than the max number of threads using tryPush/tryPop, otherwise they could fail forever
 // It's preferred to set THR_SIZE twice the max number, because THR_SIZE is the size of an open addressing hash table
 // 16 is a good default value for THR_SIZE, as 16 tids fit exactly in a cache line: 16 * 4 = 64
 template<class T, uint32_t SIZE, uint32_t THR_SIZE = 16>
@@ -111,21 +111,28 @@ public:
         commitWrite(idx);
     }
 
-    // not zero-copy, but wait-free(or wait-forever if THR_SIZE is not large enough)
-    template<typename... Args>
-    bool tryEmplace(Args&&... args) {
+    // zero-copy and wait-free
+    // Visitor's signature: void f(T& val), where val is an *unconstructed* object
+    template<typename Visitor>
+    bool tryVisitPush(Visitor v) {
         ThrIdx* thridx = getThrIdx();
         if(!thridx) return false;
         int64_t& idx = thridx->write_idx;
-        if(idx < 0) {
-            idx = getWriteIdx();
-        }
+        if(idx < 0) idx = getWriteIdx();
         T* data = getWritable(idx);
         if(!data) return false;
-        new(data) T(std::forward<Args>(args)...);
+        v(*data);
         commitWrite(idx);
         idx = -1;
         return true;
+    }
+
+    // We should've provided a tryEmplace that takes variadic parameters instead of a single Type as in tryPush
+    // but lambda doesn't support variadic perfect forwarding in capture until C++20, which is sad...
+    template<typename Type>
+    bool tryPush(Type&& val) {
+        return tryVisitPush(
+            [val = std::forward<decltype(val)>(val)](T& data) { new(&data) T(std::forward<decltype(val)>(val)); });
     }
 
     int64_t getReadIdx() {
@@ -155,8 +162,10 @@ public:
         return ret;
     }
 
-    // not zero-copy, but wait-free(or wait-forever if THR_SIZE is not large enough)
-    bool tryPop(T& v) {
+    // zero-copy and wait-free
+    // Visitor's signature: void f(T&& val)
+    template<typename Visitor>
+    bool tryVisitPop(Visitor v) {
         ThrIdx* thridx = getThrIdx();
         if(!thridx) return false;
         int64_t& idx = thridx->read_idx;
@@ -165,10 +174,15 @@ public:
         }
         T* data = getReadable(idx);
         if(!data) return false;
-        v = std::move(*data);
+        v(std::move(*data));
         commitRead(idx);
         idx = -1;
         return true;
+    }
+
+    // not zero-copy, but wait-free
+    bool tryPop(T& v) {
+        return tryVisitPop([&](T&& data) { v = std::move(data); });
     }
 
 private:

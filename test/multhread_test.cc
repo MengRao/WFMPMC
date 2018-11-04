@@ -2,7 +2,7 @@
 #include "../WFMPMC.h"
 using namespace std;
 
-const int nthr = 6;
+const int nthr = 4;
 const int num_per_thr = 1000000;
 
 WFMPMC<int, 4, 16> q;
@@ -24,7 +24,11 @@ void writer() {
             q.emplace(newval);
         }
         else if(lounger == 2) {
-            while(!q.tryEmplace(newval))
+            while(!q.tryPush(newval))
+                ;
+        }
+        else if(lounger == 3) {
+            while(!q.tryVisitPush([&](int& data) { data = newval; }))
                 ;
         }
         else { // lounger == 0
@@ -51,6 +55,10 @@ void reader() {
             while(!q.tryPop(data))
                 ;
             sum += data;
+        }
+        else if(lounger == 3) {
+            while(!q.tryVisitPop([&](int&& data) { sum += data; }))
+                ;
         }
         else {
             int64_t idx = q.getReadIdx();

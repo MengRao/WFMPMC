@@ -34,60 +34,91 @@ public:
 int Foo::ctor = 0;
 int Foo::dtor = 0;
 
-void assertTor(int ctor, int dtor) {
+int ctor = 0;
+int dtor = 0;
+void assertTor() {
     assert(ctor == Foo::ctor && dtor == Foo::dtor);
 }
 
 void torTest() {
     WFMPMC<Foo, 8> q;
-    assertTor(0, 0);
+    assertTor();
     {
         auto idx = q.getWriteIdx();
         Foo* data;
         while((data = q.getWritable(idx)) == nullptr)
             ;
-        assertTor(0, 0);
+        assertTor();
         new(data) Foo(1);
         q.commitWrite(idx);
     }
-    assertTor(1, 0);
+    ctor++;
+    assertTor();
     {
-        while(!q.tryEmplace(2))
+        while(!q.tryPush(2))
             ;
     }
-    assertTor(2, 0);
+    ctor++;
+    assertTor();
+    {
+        while(!q.tryVisitPush(([](Foo& data) {
+            assertTor();
+            new(&data) Foo(3);
+            ctor++;
+            assertTor();
+        })))
+            ;
+    }
+    assertTor();
 
-    q.emplace(3);
+    q.emplace(4);
 
-    assertTor(3, 0);
+    ctor++;
+    assertTor();
 
     {
         int64_t idx = q.getReadIdx();
         Foo* data;
         while((data = q.getReadable(idx)) == nullptr)
             ;
-        assertTor(3, 0);
+        assertTor();
         assert(data->a == 1);
         q.commitRead(idx);
     }
-    assertTor(3, 1);
+    dtor++;
+    assertTor();
     {
         Foo data(0);
-        assertTor(4, 1);
+        ctor++;
+        assertTor();
         while(!q.tryPop(data))
             ;
         assert(data.a == 2);
-        assertTor(4, 2);
+        dtor++;
+        assertTor();
     }
-    assertTor(4, 3);
+    dtor++;
+    assertTor();
+    {
+        while(!q.tryVisitPop([](Foo&& data) {
+            assert(data.a == 3);
+            assertTor();
+        }))
+            ;
+    }
+    dtor++;
+    assertTor();
 
-    q.emplace(4);
+    q.emplace(5);
 
-    assertTor(5, 3);
+    ctor++;
+    assertTor();
 
-    assert(q.pop().a == 3);
-
-    assertTor(6, 5);
+    assert(q.pop().a == 4);
+    ctor++;
+    dtor++;
+    dtor++;
+    assertTor();
 }
 
 int main() {

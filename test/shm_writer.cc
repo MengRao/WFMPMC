@@ -25,7 +25,15 @@ void writer() {
             q->emplace(Entry{now(), tid, num});
         }
         else if(lounger == 2) {
-            while(!q->tryEmplace(Entry{now(), tid, num}))
+            while(!q->tryPush(Entry{now(), tid, num}))
+                ;
+        }
+        else if(lounger == 3) {
+            while(!q->tryVisitPush([&](Entry& data) {
+                data.tid = tid;
+                data.val = num;
+                data.ts = now();
+            }))
                 ;
         }
         else { // lounger == 0

@@ -20,7 +20,11 @@ void bench() {
                 q.emplace(write_num);
             }
             else if(lounger == 2) {
-                while(!q.tryEmplace(write_num))
+                while(!q.tryPush(write_num))
+                    ;
+            }
+            else if(lounger == 3) {
+                while(!q.tryVisitPush([&](int& data) { data = write_num; }))
                     ;
             }
             else { // lounger == 0
@@ -40,6 +44,10 @@ void bench() {
             }
             else if(lounger == 2) {
                 while(!q.tryPop(cur))
+                    ;
+            }
+            else if(lounger == 3) {
+                while(!q.tryVisitPop([&](int&& data) { cur = data; }))
                     ;
             }
             else {
